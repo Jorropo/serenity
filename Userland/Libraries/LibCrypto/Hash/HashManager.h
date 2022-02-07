@@ -13,6 +13,7 @@
 #include <LibCrypto/Hash/MD5.h>
 #include <LibCrypto/Hash/SHA1.h>
 #include <LibCrypto/Hash/SHA2.h>
+#include <LibCrypto/Hash/BLAKE2.h>
 
 namespace Crypto {
 namespace Hash {
@@ -24,6 +25,7 @@ enum class HashKind {
     SHA384,
     SHA512,
     MD5,
+    BLAKE2s_256,
 };
 
 struct MultiHashDigestVariant {
@@ -59,6 +61,11 @@ struct MultiHashDigestVariant {
     {
     }
 
+    MultiHashDigestVariant(BLAKE2s_256::DigestType digest)
+        : m_digest(move(digest))
+    {
+    }
+
     [[nodiscard]] const u8* immutable_data() const
     {
         return m_digest.visit(
@@ -80,7 +87,7 @@ struct MultiHashDigestVariant {
             [&](const auto& value) { return value.bytes(); });
     }
 
-    using DigestVariant = Variant<Empty, MD5::DigestType, SHA1::DigestType, SHA256::DigestType, SHA384::DigestType, SHA512::DigestType>;
+    using DigestVariant = Variant<Empty, MD5::DigestType, SHA1::DigestType, SHA256::DigestType, SHA384::DigestType, SHA512::DigestType, BLAKE2s_256::DigestType>;
     DigestVariant m_digest {};
 };
 
@@ -147,6 +154,9 @@ public:
         case HashKind::SHA512:
             m_algorithm = SHA512();
             break;
+        case HashKind::BLAKE2s_256:
+            m_algorithm = BLAKE2s_256();
+            break;
         default:
         case HashKind::None:
             m_algorithm = Empty {};
@@ -204,7 +214,7 @@ public:
     }
 
 private:
-    using AlgorithmVariant = Variant<Empty, MD5, SHA1, SHA256, SHA384, SHA512>;
+    using AlgorithmVariant = Variant<Empty, MD5, SHA1, SHA256, SHA384, SHA512, BLAKE2s_256>;
     AlgorithmVariant m_algorithm {};
     HashKind m_kind { HashKind::None };
     ByteBuffer m_pre_init_buffer;
